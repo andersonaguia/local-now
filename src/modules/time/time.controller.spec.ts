@@ -14,7 +14,7 @@ describe('TimeController', () => {
     timeController = app.get<TimeController>(TimeController);
   });
 
-  describe('root', () => {
+  describe('time', () => {
     it('returns unix time for the ESP clock', () => {
       const result = timeController.getTime();
       expect(result.unix).toEqual(expect.any(Number));

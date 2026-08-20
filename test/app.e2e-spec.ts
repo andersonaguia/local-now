@@ -26,6 +26,17 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
+      .expect('Content-Type', /html/)
+      .expect((res) => {
+        expect(res.text).toContain('Server is running');
+        expect(res.text).toContain('NestJS');
+      });
+  });
+
+  it('/time (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/time')
+      .expect(200)
       .expect((res) => {
         expect(res.body.unix).toEqual(expect.any(Number));
         expect(res.body.tz).toBe(-3 * 3600);
@@ -77,7 +88,7 @@ describe('AppController (e2e)', () => {
       .get('/docs-json')
       .expect(200)
       .expect((res) => {
-        expect(res.body.paths).toHaveProperty('/');
+        expect(res.body.paths).toHaveProperty('/time');
         expect(res.body.paths).toHaveProperty('/geo');
         expect(res.body.paths).toHaveProperty('/weather');
       });
@@ -87,11 +98,11 @@ describe('AppController (e2e)', () => {
     const server = app.getHttpServer();
 
     for (let i = 0; i < 10; i++) {
-      await request(server).get('/').expect(200);
+      await request(server).get('/time').expect(200);
     }
 
     await request(server)
-      .get('/')
+      .get('/time')
       .expect(429)
       .expect((res) => {
         expect(res.body.message).toBe('Too Many Requests');
