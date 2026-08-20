@@ -30,6 +30,11 @@ describe('AppController (e2e)', () => {
       .expect((res) => {
         expect(res.text).toContain('Server is running');
         expect(res.text).toContain('NestJS');
+        expect(res.text).toMatch(/\d{2}\/\d{2}\/\d{4}/);
+        expect(res.text).toMatch(/\d{2}:\d{2}:\d{2}/);
+        expect(res.text).toContain('Cidade');
+        expect(res.text).toContain('Temperatura');
+        expect(res.text).toContain('Sensação térmica');
       });
   });
 
