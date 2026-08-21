@@ -28,7 +28,9 @@ export function renderHomePage(data: HomePageData): string {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Server is running</title>
+    <title>Local Now Server</title>
+    <link rel="icon" href="https://nestjs.com/img/logo-small.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="https://nestjs.com/img/logo-small.svg" />
     <style>
       :root {
         --bg: #09090b;
@@ -36,7 +38,6 @@ export function renderHomePage(data: HomePageData): string {
         --red: #e0234e;
         --text: #f4f4f5;
         --muted: #a1a1aa;
-        --ok: #4ade80;
         --line: rgba(255, 255, 255, 0.08);
       }
 
@@ -83,35 +84,14 @@ export function renderHomePage(data: HomePageData): string {
       .logo {
         width: clamp(56px, 16vw, 72px);
         height: clamp(56px, 16vw, 72px);
-        margin: 0 auto 1.1rem;
+        margin: 0 auto 1.5rem;
         filter: drop-shadow(0 12px 28px rgba(224, 35, 78, 0.45));
-      }
-
-      h1 {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.6rem;
-        font-size: clamp(1rem, 4.2vw, 1.15rem);
-        font-weight: 650;
-        letter-spacing: -0.03em;
-      }
-
-      .dot {
-        flex-shrink: 0;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--ok);
-        box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
-        animation: pulse 1.8s ease-out infinite;
       }
 
       .metrics {
         display: grid;
         grid-template-columns: 1fr;
         gap: 0.75rem;
-        margin-top: 1.5rem;
         text-align: left;
       }
 
@@ -160,12 +140,6 @@ export function renderHomePage(data: HomePageData): string {
           grid-column: 1 / -1;
         }
       }
-
-      @keyframes pulse {
-        70% {
-          box-shadow: 0 0 0 12px rgba(74, 222, 128, 0);
-        }
-      }
     </style>
   </head>
   <body>
@@ -177,7 +151,6 @@ export function renderHomePage(data: HomePageData): string {
         height="72"
         alt="NestJS"
       />
-      <h1><span class="dot" aria-hidden="true"></span> Server is running</h1>
       <section class="metrics">
         <article class="metric wide">
           <span>Cidade</span>

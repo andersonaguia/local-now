@@ -45,7 +45,7 @@ describe('AppController', () => {
     const req = { headers: {}, ip: '8.8.8.8' } as unknown as Request;
     const html = await controller.home(req);
 
-    expect(html).toContain('Server is running');
+    expect(html).toContain('Local Now Server');
     expect(html).toContain('São Paulo');
     expect(html).toContain('QUI 20/08/2026');
     expect(html).toContain('18:34:02');
@@ -58,7 +58,7 @@ describe('AppController', () => {
     const req = { headers: {}, ip: '8.8.8.8' } as unknown as Request;
     const html = await controller.home(req);
 
-    expect(html).toContain('Server is running');
+    expect(html).toContain('Local Now Server');
     expect(html).toContain('20/08/2026');
     expect(html).toContain('18:34:02');
     expect(html).toContain('—');

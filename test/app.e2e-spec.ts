@@ -28,7 +28,7 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect('Content-Type', /html/)
       .expect((res) => {
-        expect(res.text).toContain('Server is running');
+        expect(res.text).toContain('Local Now Server');
         expect(res.text).toContain('NestJS');
         expect(res.text).toMatch(/\d{2}\/\d{2}\/\d{4}/);
         expect(res.text).toMatch(/\d{2}:\d{2}:\d{2}/);
