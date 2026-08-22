@@ -10,12 +10,12 @@ describe('skipThrottlerForDocs', () => {
     } as ExecutionContext;
   }
 
-  it('skips swagger docs routes', () => {
+  it('should be able to skip swagger docs routes', () => {
     expect(skipThrottlerForDocs(contextWithPath('/docs'))).toBe(true);
     expect(skipThrottlerForDocs(contextWithPath('/docs-json'))).toBe(true);
   });
 
-  it('does not skip API routes', () => {
+  it('should not be able to skip API routes', () => {
     expect(skipThrottlerForDocs(contextWithPath('/'))).toBe(false);
     expect(skipThrottlerForDocs(contextWithPath('/geo'))).toBe(false);
     expect(skipThrottlerForDocs(contextWithPath('/weather'))).toBe(false);

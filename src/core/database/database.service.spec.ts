@@ -3,7 +3,7 @@ import { Test } from '@nestjs/testing';
 import { DatabaseService } from './database.service';
 
 describe('DatabaseService', () => {
-  it('connects to a local libSQL database', async () => {
+  it('should be able to connect to a local libSQL database', async () => {
     const module = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
