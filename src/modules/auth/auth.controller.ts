@@ -1,8 +1,10 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { toDto } from '../../core/http/to-dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { ApiAuthTag, ApiRegister } from './auth.docs';
+import { ApiAuthTag, ApiLogin, ApiRegister } from './auth.docs';
 import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
+import { LoginResponseDto } from './dto/login-response.dto';
 import { RegisterDto } from './dto/register.dto';
 
 @ApiAuthTag()
@@ -16,5 +18,13 @@ export class AuthController {
   async register(@Body() dto: RegisterDto): Promise<UserResponseDto> {
     const user = await this.authService.register(dto);
     return toDto(UserResponseDto, user);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiLogin()
+  async login(@Body() dto: LoginDto): Promise<LoginResponseDto> {
+    const tokens = await this.authService.login(dto);
+    return toDto(LoginResponseDto, tokens);
   }
 }
