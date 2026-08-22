@@ -25,6 +25,7 @@ describe('AuthService', () => {
     findById: jest.fn(),
     rotate: jest.fn(),
     revokeAllForUser: jest.fn(),
+    revoke: jest.fn(),
   };
   const jwtService = {
     signAsync: jest.fn(),
@@ -63,6 +64,7 @@ describe('AuthService', () => {
     refreshTokensService.findById.mockReset();
     refreshTokensService.rotate.mockReset();
     refreshTokensService.revokeAllForUser.mockReset();
+    refreshTokensService.revoke.mockReset();
     jwtService.signAsync.mockReset();
     jwtService.verifyAsync.mockReset();
     jwtService.signAsync
@@ -275,5 +277,57 @@ describe('AuthService', () => {
       service.refresh({ refreshToken: 'old-refresh-token' }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(refreshTokensService.rotate).not.toHaveBeenCalled();
+  });
+
+  it('should be able to logout and revoke the current refresh token', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: 'user-1',
+      jti: 'refresh-1',
+    });
+    refreshTokensService.findById.mockResolvedValue({
+      id: 'refresh-1',
+      userId: 'user-1',
+      tokenHash: hashToken('old-refresh-token'),
+      expiresAt: new Date(Date.now() + 86_400_000),
+      createdAt: new Date(),
+      revokedAt: null,
+    });
+
+    await service.logout({ refreshToken: 'old-refresh-token' });
+
+    expect(jwtService.verifyAsync).toHaveBeenCalledWith(
+      'old-refresh-token',
+      expect.objectContaining({ ignoreExpiration: true }),
+    );
+    expect(refreshTokensService.revoke).toHaveBeenCalledWith('refresh-1');
+  });
+
+  it('should be able to logout when the token is already revoked', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: 'user-1',
+      jti: 'refresh-1',
+    });
+    refreshTokensService.findById.mockResolvedValue({
+      id: 'refresh-1',
+      userId: 'user-1',
+      tokenHash: hashToken('old-refresh-token'),
+      expiresAt: new Date(Date.now() + 86_400_000),
+      createdAt: new Date(),
+      revokedAt: new Date(),
+    });
+
+    await expect(
+      service.logout({ refreshToken: 'old-refresh-token' }),
+    ).resolves.toBeUndefined();
+    expect(refreshTokensService.revoke).not.toHaveBeenCalled();
+  });
+
+  it('should not be able to logout with an invalid refresh token', async () => {
+    jwtService.verifyAsync.mockRejectedValue(new Error('invalid token'));
+
+    await expect(
+      service.logout({ refreshToken: 'broken-token' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(refreshTokensService.revoke).not.toHaveBeenCalled();
   });
 });

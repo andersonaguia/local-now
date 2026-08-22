@@ -99,6 +99,7 @@ describe('AppController (e2e)', () => {
         expect(res.body.paths).toHaveProperty('/auth/register');
         expect(res.body.paths).toHaveProperty('/auth/login');
         expect(res.body.paths).toHaveProperty('/auth/refresh');
+        expect(res.body.paths).toHaveProperty('/auth/logout');
       });
   });
 
@@ -126,6 +127,13 @@ describe('AppController (e2e)', () => {
   it('should not be able to refresh with an invalid payload', () => {
     return request(app.getHttpServer())
       .post('/auth/refresh')
+      .send({ refreshToken: '' })
+      .expect(400);
+  });
+
+  it('should not be able to logout with an invalid payload', () => {
+    return request(app.getHttpServer())
+      .post('/auth/logout')
       .send({ refreshToken: '' })
       .expect(400);
   });

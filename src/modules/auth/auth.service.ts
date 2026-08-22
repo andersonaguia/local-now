@@ -109,12 +109,37 @@ export class AuthService {
     return pair.tokens;
   }
 
-  private async readRefreshPayload(token: string): Promise<RefreshPayload> {
+  async logout(dto: RefreshDto): Promise<void> {
+    const payload = await this.readRefreshPayload(dto.refreshToken, {
+      ignoreExpiration: true,
+    });
+    const stored = await this.refreshTokensService.findById(payload.jti);
+
+    if (
+      !stored ||
+      stored.userId !== payload.sub ||
+      stored.tokenHash !== hashToken(dto.refreshToken)
+    ) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    if (stored.revokedAt) {
+      return;
+    }
+
+    await this.refreshTokensService.revoke(stored.id);
+  }
+
+  private async readRefreshPayload(
+    token: string,
+    options?: { ignoreExpiration?: boolean },
+  ): Promise<RefreshPayload> {
     try {
       const payload = await this.jwtService.verifyAsync<
         Partial<RefreshPayload>
       >(token, {
         secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
+        ignoreExpiration: options?.ignoreExpiration,
       });
 
       if (typeof payload.sub !== 'string' || typeof payload.jti !== 'string') {

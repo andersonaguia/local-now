@@ -77,4 +77,11 @@ export class RefreshTokensService {
         and(eq(refreshTokens.userId, userId), isNull(refreshTokens.revokedAt)),
       );
   }
+
+  async revoke(id: string): Promise<void> {
+    await this.database.db
+      .update(refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(and(eq(refreshTokens.id, id), isNull(refreshTokens.revokedAt)));
+  }
 }

@@ -1,7 +1,13 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { toDto } from '../../core/http/to-dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
-import { ApiAuthTag, ApiLogin, ApiRefresh, ApiRegister } from './auth.docs';
+import {
+  ApiAuthTag,
+  ApiLogin,
+  ApiLogout,
+  ApiRefresh,
+  ApiRegister,
+} from './auth.docs';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -35,5 +41,12 @@ export class AuthController {
   async refresh(@Body() dto: RefreshDto): Promise<LoginResponseDto> {
     const tokens = await this.authService.refresh(dto);
     return toDto(LoginResponseDto, tokens);
+  }
+
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiLogout()
+  async logout(@Body() dto: RefreshDto): Promise<void> {
+    await this.authService.logout(dto);
   }
 }

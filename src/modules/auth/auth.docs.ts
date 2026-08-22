@@ -3,6 +3,7 @@ import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -35,6 +36,14 @@ export const ApiRefresh = () =>
       summary: 'Troca um refresh token válido por um novo par de tokens',
     }),
     ApiOkResponse({ type: () => LoginResponseDto }),
+    ApiBadRequestResponse({ description: 'Dados de entrada inválidos' }),
+    ApiUnauthorizedResponse({ description: 'Invalid refresh token' }),
+  );
+
+export const ApiLogout = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Encerra a sessão e revoga o refresh token' }),
+    ApiNoContentResponse(),
     ApiBadRequestResponse({ description: 'Dados de entrada inválidos' }),
     ApiUnauthorizedResponse({ description: 'Invalid refresh token' }),
   );

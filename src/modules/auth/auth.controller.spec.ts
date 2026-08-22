@@ -8,6 +8,7 @@ describe('AuthController', () => {
     register: jest.fn(),
     login: jest.fn(),
     refresh: jest.fn(),
+    logout: jest.fn(),
   };
   let controller: AuthController;
 
@@ -28,9 +29,11 @@ describe('AuthController', () => {
     authService.register.mockReset();
     authService.login.mockReset();
     authService.refresh.mockReset();
+    authService.logout.mockReset();
     authService.register.mockResolvedValue(user);
     authService.login.mockResolvedValue(tokens);
     authService.refresh.mockResolvedValue(tokens);
+    authService.logout.mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       controllers: [AuthController],
@@ -93,5 +96,14 @@ describe('AuthController', () => {
       refreshToken: 'old-refresh-token',
     });
     expect(result).toEqual(tokens);
+  });
+
+  it('should be able to logout with a refresh token', async () => {
+    await expect(
+      controller.logout({ refreshToken: 'old-refresh-token' }),
+    ).resolves.toBeUndefined();
+    expect(authService.logout).toHaveBeenCalledWith({
+      refreshToken: 'old-refresh-token',
+    });
   });
 });
