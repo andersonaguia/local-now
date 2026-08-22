@@ -1,6 +1,8 @@
 import {
+  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -19,6 +21,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FirmwareManifestDto } from './dto/firmware-manifest.dto';
 import { UploadFirmwareDto } from './dto/upload-firmware.dto';
 import {
+  ApiDeleteFirmware,
   ApiDownloadFirmware,
   ApiFirmwareTag,
   ApiGetFirmwareManifest,
@@ -53,6 +56,27 @@ export class FirmwareController {
       createdBy: request.user.id,
     });
     return toDto(FirmwareManifestDto, manifest);
+  }
+
+  @Delete('firmware')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiDeleteFirmware()
+  async remove(
+    @Query('version') version?: string,
+    @Query('model') model?: string,
+  ): Promise<void> {
+    if (version === undefined || version === '') {
+      await this.firmwareService.removeAll();
+      return;
+    }
+
+    const parsed = Number(version);
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      throw new BadRequestException('version must be a positive integer');
+    }
+
+    await this.firmwareService.remove(parsed, model);
   }
 
   @Get('firmware')

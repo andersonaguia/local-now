@@ -20,8 +20,13 @@ describe('FirmwareService', () => {
   const db = {
     select: jest.fn(() => chain),
     insert: jest.fn(() => chain),
+    delete: jest.fn(() => chain),
   };
-  const githubReleases = { publishAsset: jest.fn() };
+  const githubReleases = {
+    publishAsset: jest.fn(),
+    deleteByTag: jest.fn(),
+    deleteAllReleases: jest.fn(),
+  };
   let service: FirmwareService;
 
   const file = {
@@ -49,8 +54,13 @@ describe('FirmwareService', () => {
     chain.returning.mockReset();
     db.select.mockClear();
     db.insert.mockClear();
+    db.delete.mockClear();
     githubReleases.publishAsset.mockReset();
+    githubReleases.deleteByTag.mockReset();
+    githubReleases.deleteAllReleases.mockReset();
     githubReleases.publishAsset.mockResolvedValue({ url: release.url });
+    githubReleases.deleteByTag.mockResolvedValue(undefined);
+    githubReleases.deleteAllReleases.mockResolvedValue(undefined);
     service = new FirmwareService(
       { db } as unknown as DatabaseService,
       githubReleases as unknown as GithubReleasesService,
@@ -118,6 +128,27 @@ describe('FirmwareService', () => {
       sha256: 'abc',
       model: 'car-display',
     });
+  });
+
+  it('should be able to delete a firmware version from github and the database', async () => {
+    chain.limit.mockResolvedValue([release]);
+
+    await expect(service.remove(2)).resolves.toBeUndefined();
+    expect(githubReleases.deleteByTag).toHaveBeenCalledWith('car-display-2');
+    expect(db.delete).toHaveBeenCalled();
+  });
+
+  it('should not be able to delete a firmware version that does not exist', async () => {
+    chain.limit.mockResolvedValue([]);
+
+    await expect(service.remove(9)).rejects.toBeInstanceOf(NotFoundException);
+    expect(githubReleases.deleteByTag).not.toHaveBeenCalled();
+  });
+
+  it('should be able to delete all firmware releases', async () => {
+    await expect(service.removeAll()).resolves.toBeUndefined();
+    expect(githubReleases.deleteAllReleases).toHaveBeenCalled();
+    expect(db.delete).toHaveBeenCalled();
   });
 
   it('should not be able to return a manifest when no firmware exists', async () => {

@@ -7,6 +7,7 @@ import {
   ApiConsumes,
   ApiCreatedResponse,
   ApiFoundResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -43,6 +44,32 @@ export const ApiPublishFirmware = () =>
       description: 'Missing or invalid access token',
     }),
     ApiConflictResponse({ description: 'Firmware version already published' }),
+  );
+
+export const ApiDeleteFirmware = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Remove um firmware ou zera todas as versões',
+      description:
+        'Sem version, apaga todos os registros no banco e todas as Releases/tags no repositório. Com version, remove só essa versão.',
+    }),
+    ApiBearerAuth(),
+    ApiQuery({
+      name: 'version',
+      required: false,
+      example: 2,
+    }),
+    ApiQuery({
+      name: 'model',
+      required: false,
+      example: DEFAULT_FIRMWARE_MODEL,
+    }),
+    ApiNoContentResponse(),
+    ApiBadRequestResponse({ description: 'version inválida' }),
+    ApiUnauthorizedResponse({
+      description: 'Missing or invalid access token',
+    }),
+    ApiNotFoundResponse({ description: 'Firmware not found' }),
   );
 
 export const ApiGetFirmwareManifest = () =>

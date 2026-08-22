@@ -84,6 +84,58 @@ describe('GithubReleasesService', () => {
         buffer: Buffer.from([0xe9]),
       }),
     ).rejects.toBeInstanceOf(BadGatewayException);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it('should be able to delete a release by tag and its git tag', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            id: 10,
+            tag_name: 'car-display-2',
+          }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: () => Promise.resolve(undefined),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: () => Promise.resolve(undefined),
+      });
+
+    await expect(service.deleteByTag('car-display-2')).resolves.toBeUndefined();
     expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('should be able to delete every github release', async () => {
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve([{ id: 10, tag_name: 'car-display-2' }]),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: () => Promise.resolve(undefined),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+        json: () => Promise.resolve(undefined),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve([]),
+      });
+
+    await expect(service.deleteAllReleases()).resolves.toBeUndefined();
   });
 });
