@@ -38,11 +38,7 @@ export class WeatherService {
       );
     }
 
-    const data = await this.lookup(
-      geo.latitude,
-      geo.longitude,
-      geo.timezone,
-    );
+    const data = await this.lookup(geo.latitude, geo.longitude, geo.timezone);
     const current = data.current;
     const weatherCode = current?.weather_code ?? -1;
 
@@ -83,11 +79,15 @@ export class WeatherService {
         signal: AbortSignal.timeout(LOOKUP_TIMEOUT_MS),
       });
     } catch {
-      throw new BadGatewayException('Unable to resolve weather for this location');
+      throw new BadGatewayException(
+        'Unable to resolve weather for this location',
+      );
     }
 
     if (!response.ok) {
-      throw new BadGatewayException('Unable to resolve weather for this location');
+      throw new BadGatewayException(
+        'Unable to resolve weather for this location',
+      );
     }
 
     return (await response.json()) as OpenMeteoResponse;

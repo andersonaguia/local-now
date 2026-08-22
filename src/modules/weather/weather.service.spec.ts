@@ -23,7 +23,7 @@ describe('WeatherService', () => {
   beforeEach(() => {
     geoService.getLocation.mockReset();
     fetchMock.mockReset();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
     service = new WeatherService(geoService as unknown as GeoService);
   });
 

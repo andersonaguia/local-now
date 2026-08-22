@@ -22,7 +22,12 @@ export function normalizeIp(ip: string): string {
 
 export function isPrivateIp(ip: string): boolean {
   const value = normalizeIp(ip);
-  if (!value || value === '::1' || value === '127.0.0.1' || value === 'localhost') {
+  if (
+    !value ||
+    value === '::1' ||
+    value === '127.0.0.1' ||
+    value === 'localhost'
+  ) {
     return true;
   }
   if (

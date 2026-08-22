@@ -8,7 +8,7 @@ describe('GeoService', () => {
   beforeEach(() => {
     service = new GeoService();
     fetchMock.mockReset();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
   });
 
   it('should be able to look up a public client IP', async () => {

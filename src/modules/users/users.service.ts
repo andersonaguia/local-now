@@ -31,6 +31,15 @@ export class UsersService {
     return user;
   }
 
+  async hasAny(): Promise<boolean> {
+    const [user] = await this.database.db
+      .select({ id: users.id })
+      .from(users)
+      .limit(1);
+
+    return Boolean(user);
+  }
+
   async create(data: { email: string; passwordHash: string }): Promise<User> {
     const now = new Date();
     const [user] = await this.database.db

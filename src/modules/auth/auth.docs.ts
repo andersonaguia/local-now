@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -16,9 +17,17 @@ export const ApiAuthTag = () => ApiTags('auth');
 
 export const ApiRegister = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Cria uma nova conta' }),
+    ApiOperation({
+      summary: 'Cria uma nova conta',
+      description:
+        'Requer um access token de um usuário existente, exceto quando ainda não há nenhuma conta.',
+    }),
+    ApiBearerAuth(),
     ApiCreatedResponse({ type: () => UserResponseDto }),
     ApiBadRequestResponse({ description: 'Dados de entrada inválidos' }),
+    ApiUnauthorizedResponse({
+      description: 'Missing or invalid access token',
+    }),
     ApiConflictResponse({ description: 'Email already registered' }),
   );
 

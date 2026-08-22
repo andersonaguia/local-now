@@ -56,6 +56,18 @@ describe('UsersService', () => {
     });
   });
 
+  it('should be able to detect when at least one user exists', async () => {
+    chain.limit.mockResolvedValue([{ id: 'user-1' }]);
+
+    await expect(service.hasAny()).resolves.toBe(true);
+  });
+
+  it('should not be able to detect users when the table is empty', async () => {
+    chain.limit.mockResolvedValue([]);
+
+    await expect(service.hasAny()).resolves.toBe(false);
+  });
+
   it('should be able to create a user without returning the password hash', async () => {
     chain.returning.mockResolvedValue([user]);
 

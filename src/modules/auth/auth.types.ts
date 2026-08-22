@@ -4,3 +4,8 @@ export type AuthTokens = {
   tokenType: 'Bearer';
   expiresIn: number;
 };
+
+export type AuthUser = {
+  id: string;
+  email: string;
+};

@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { toDto } from '../../core/http/to-dto';
 import { UserResponseDto } from '../users/dto/user-response.dto';
 import {
@@ -8,6 +15,7 @@ import {
   ApiRefresh,
   ApiRegister,
 } from './auth.docs';
+import { CanRegisterGuard } from './can-register.guard';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -20,6 +28,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @UseGuards(CanRegisterGuard)
   @HttpCode(HttpStatus.CREATED)
   @ApiRegister()
   async register(@Body() dto: RegisterDto): Promise<UserResponseDto> {

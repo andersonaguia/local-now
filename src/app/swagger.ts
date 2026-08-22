@@ -8,9 +8,11 @@ export function setupSwagger(app: INestApplication): void {
       'Horário, geolocalização e clima a partir do IP do cliente. Limite: 10 requisições por segundo por IP.',
     )
     .setVersion('0.0.1')
+    .addBearerAuth()
     .addGlobalResponse({
       status: 429,
-      description: 'Too Many Requests — mais de 10 requisições por segundo no mesmo IP',
+      description:
+        'Too Many Requests — mais de 10 requisições por segundo no mesmo IP',
     })
     .build();
 
