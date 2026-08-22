@@ -16,5 +16,6 @@ import { RefreshTokensService } from './refresh-tokens.service';
     JwtAuthGuard,
     CanRegisterGuard,
   ],
+  exports: [JwtAuthGuard, JwtModule, UsersModule],
 })
 export class AuthModule {}

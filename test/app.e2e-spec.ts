@@ -100,6 +100,7 @@ describe('AppController (e2e)', () => {
         expect(res.body.paths).toHaveProperty('/auth/login');
         expect(res.body.paths).toHaveProperty('/auth/refresh');
         expect(res.body.paths).toHaveProperty('/auth/logout');
+        expect(res.body.paths).toHaveProperty('/firmware');
       });
   });
 
