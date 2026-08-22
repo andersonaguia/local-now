@@ -12,12 +12,18 @@ import { User } from '../users/users.types';
 import { AuthTokens } from './auth.types';
 import { durationToMs, durationToSeconds, hashToken } from './auth.utils';
 import { LoginDto } from './dto/login.dto';
+import { RefreshDto } from './dto/refresh.dto';
 import { RegisterDto } from './dto/register.dto';
 import { RefreshTokensService } from './refresh-tokens.service';
 
 const PASSWORD_ROUNDS = 10;
 const DUMMY_PASSWORD_HASH =
   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+
+type RefreshPayload = {
+  sub: string;
+  jti: string;
+};
 
 @Injectable()
 export class AuthService {
@@ -60,6 +66,79 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    const pair = await this.issueTokenPair(user);
+    await this.refreshTokensService.create(pair.refreshSession);
+    return pair.tokens;
+  }
+
+  async refresh(dto: RefreshDto): Promise<AuthTokens> {
+    const payload = await this.readRefreshPayload(dto.refreshToken);
+    const stored = await this.refreshTokensService.findById(payload.jti);
+
+    if (!stored || stored.userId !== payload.sub) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    if (stored.revokedAt) {
+      await this.refreshTokensService.revokeAllForUser(stored.userId);
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    if (
+      stored.expiresAt.getTime() <= Date.now() ||
+      stored.tokenHash !== hashToken(dto.refreshToken)
+    ) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const user = await this.usersService.findById(stored.userId);
+    if (!user) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    const pair = await this.issueTokenPair(user);
+    const rotated = await this.refreshTokensService.rotate(
+      stored.id,
+      pair.refreshSession,
+    );
+
+    if (!rotated) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    return pair.tokens;
+  }
+
+  private async readRefreshPayload(token: string): Promise<RefreshPayload> {
+    try {
+      const payload = await this.jwtService.verifyAsync<
+        Partial<RefreshPayload>
+      >(token, {
+        secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      });
+
+      if (typeof payload.sub !== 'string' || typeof payload.jti !== 'string') {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      return { sub: payload.sub, jti: payload.jti };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  private async issueTokenPair(user: { id: string; email: string }): Promise<{
+    tokens: AuthTokens;
+    refreshSession: {
+      id: string;
+      userId: string;
+      tokenHash: string;
+      expiresAt: Date;
+    };
+  }> {
     const accessExpiresIn = this.config.getOrThrow<string>(
       'JWT_ACCESS_EXPIRES_IN',
     );
@@ -85,18 +164,19 @@ export class AuthService {
       ),
     ]);
 
-    await this.refreshTokensService.create({
-      id: refreshId,
-      userId: user.id,
-      tokenHash: hashToken(refreshToken),
-      expiresAt: new Date(Date.now() + durationToMs(refreshExpiresIn)),
-    });
-
     return {
-      accessToken,
-      refreshToken,
-      tokenType: 'Bearer',
-      expiresIn: durationToSeconds(accessExpiresIn),
+      tokens: {
+        accessToken,
+        refreshToken,
+        tokenType: 'Bearer',
+        expiresIn: durationToSeconds(accessExpiresIn),
+      },
+      refreshSession: {
+        id: refreshId,
+        userId: user.id,
+        tokenHash: hashToken(refreshToken),
+        expiresAt: new Date(Date.now() + durationToMs(refreshExpiresIn)),
+      },
     };
   }
 }

@@ -7,6 +7,7 @@ describe('AuthController', () => {
   const authService = {
     register: jest.fn(),
     login: jest.fn(),
+    refresh: jest.fn(),
   };
   let controller: AuthController;
 
@@ -26,8 +27,10 @@ describe('AuthController', () => {
   beforeEach(async () => {
     authService.register.mockReset();
     authService.login.mockReset();
+    authService.refresh.mockReset();
     authService.register.mockResolvedValue(user);
     authService.login.mockResolvedValue(tokens);
+    authService.refresh.mockResolvedValue(tokens);
 
     const module = await Test.createTestingModule({
       controllers: [AuthController],
@@ -79,5 +82,16 @@ describe('AuthController', () => {
         password: 'wrong-password',
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('should be able to rotate tokens from a refresh token', async () => {
+    const result = await controller.refresh({
+      refreshToken: 'old-refresh-token',
+    });
+
+    expect(authService.refresh).toHaveBeenCalledWith({
+      refreshToken: 'old-refresh-token',
+    });
+    expect(result).toEqual(tokens);
   });
 });

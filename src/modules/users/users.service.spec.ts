@@ -45,6 +45,17 @@ describe('UsersService', () => {
     });
   });
 
+  it('should be able to find a user by id', async () => {
+    chain.limit.mockResolvedValue([
+      { ...user, passwordHash: 'hashed-password' },
+    ]);
+
+    await expect(service.findById('user-1')).resolves.toEqual({
+      ...user,
+      passwordHash: 'hashed-password',
+    });
+  });
+
   it('should be able to create a user without returning the password hash', async () => {
     chain.returning.mockResolvedValue([user]);
 

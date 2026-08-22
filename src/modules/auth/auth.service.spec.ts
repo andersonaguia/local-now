@@ -17,13 +17,18 @@ jest.mock('bcryptjs', () => ({
 describe('AuthService', () => {
   const usersService = {
     findByEmail: jest.fn(),
+    findById: jest.fn(),
     create: jest.fn(),
   };
   const refreshTokensService = {
     create: jest.fn(),
+    findById: jest.fn(),
+    rotate: jest.fn(),
+    revokeAllForUser: jest.fn(),
   };
   const jwtService = {
     signAsync: jest.fn(),
+    verifyAsync: jest.fn(),
   };
   const config = {
     getOrThrow: jest.fn((key: string) => {
@@ -51,10 +56,15 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     usersService.findByEmail.mockReset();
+    usersService.findById.mockReset();
     usersService.create.mockReset();
     usersService.create.mockResolvedValue(createdUser);
     refreshTokensService.create.mockReset();
+    refreshTokensService.findById.mockReset();
+    refreshTokensService.rotate.mockReset();
+    refreshTokensService.revokeAllForUser.mockReset();
     jwtService.signAsync.mockReset();
+    jwtService.verifyAsync.mockReset();
     jwtService.signAsync
       .mockResolvedValueOnce('access-token')
       .mockResolvedValueOnce('refresh-token');
@@ -165,5 +175,105 @@ describe('AuthService', () => {
       }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
     expect(jwtService.signAsync).not.toHaveBeenCalled();
+  });
+
+  it('should be able to rotate tokens with a valid refresh token', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: 'user-1',
+      jti: 'refresh-1',
+    });
+    refreshTokensService.findById.mockResolvedValue({
+      id: 'refresh-1',
+      userId: 'user-1',
+      tokenHash: hashToken('old-refresh-token'),
+      expiresAt: new Date(Date.now() + 86_400_000),
+      createdAt: new Date(),
+      revokedAt: null,
+    });
+    usersService.findById.mockResolvedValue(storedUser);
+    refreshTokensService.rotate.mockResolvedValue(true);
+
+    const result = await service.refresh({
+      refreshToken: 'old-refresh-token',
+    });
+
+    expect(refreshTokensService.rotate).toHaveBeenCalledWith(
+      'refresh-1',
+      expect.objectContaining({
+        userId: 'user-1',
+        tokenHash: hashToken('refresh-token'),
+      }),
+    );
+    expect(result).toEqual({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      tokenType: 'Bearer',
+      expiresIn: 900,
+    });
+  });
+
+  it('should not be able to refresh with an invalid jwt', async () => {
+    jwtService.verifyAsync.mockRejectedValue(new Error('invalid token'));
+
+    await expect(
+      service.refresh({ refreshToken: 'broken-token' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(refreshTokensService.findById).not.toHaveBeenCalled();
+  });
+
+  it('should not be able to refresh when the token is unknown', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: 'user-1',
+      jti: 'refresh-missing',
+    });
+    refreshTokensService.findById.mockResolvedValue(undefined);
+
+    await expect(
+      service.refresh({ refreshToken: 'old-refresh-token' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(refreshTokensService.rotate).not.toHaveBeenCalled();
+  });
+
+  it('should not be able to refresh a revoked token', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: 'user-1',
+      jti: 'refresh-1',
+    });
+    refreshTokensService.findById.mockResolvedValue({
+      id: 'refresh-1',
+      userId: 'user-1',
+      tokenHash: hashToken('old-refresh-token'),
+      expiresAt: new Date(Date.now() + 86_400_000),
+      createdAt: new Date(),
+      revokedAt: new Date(),
+    });
+
+    await expect(
+      service.refresh({ refreshToken: 'old-refresh-token' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(refreshTokensService.revokeAllForUser).toHaveBeenCalledWith(
+      'user-1',
+    );
+    expect(refreshTokensService.rotate).not.toHaveBeenCalled();
+  });
+
+  it('should not be able to refresh an expired token', async () => {
+    jwtService.verifyAsync.mockResolvedValue({
+      sub: 'user-1',
+      jti: 'refresh-1',
+    });
+    refreshTokensService.findById.mockResolvedValue({
+      id: 'refresh-1',
+      userId: 'user-1',
+      tokenHash: hashToken('old-refresh-token'),
+      expiresAt: new Date(Date.now() - 1000),
+      createdAt: new Date(),
+      revokedAt: null,
+    });
+
+    await expect(
+      service.refresh({ refreshToken: 'old-refresh-token' }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(refreshTokensService.rotate).not.toHaveBeenCalled();
   });
 });

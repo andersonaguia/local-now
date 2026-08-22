@@ -21,6 +21,16 @@ export class UsersService {
     return user;
   }
 
+  async findById(id: string): Promise<UserRow | undefined> {
+    const [user] = await this.database.db
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+
+    return user;
+  }
+
   async create(data: { email: string; passwordHash: string }): Promise<User> {
     const now = new Date();
     const [user] = await this.database.db

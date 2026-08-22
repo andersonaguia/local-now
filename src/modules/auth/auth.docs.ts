@@ -28,3 +28,13 @@ export const ApiLogin = () =>
     ApiBadRequestResponse({ description: 'Dados de entrada inválidos' }),
     ApiUnauthorizedResponse({ description: 'Invalid credentials' }),
   );
+
+export const ApiRefresh = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: 'Troca um refresh token válido por um novo par de tokens',
+    }),
+    ApiOkResponse({ type: () => LoginResponseDto }),
+    ApiBadRequestResponse({ description: 'Dados de entrada inválidos' }),
+    ApiUnauthorizedResponse({ description: 'Invalid refresh token' }),
+  );

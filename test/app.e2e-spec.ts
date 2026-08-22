@@ -98,6 +98,7 @@ describe('AppController (e2e)', () => {
         expect(res.body.paths).toHaveProperty('/weather');
         expect(res.body.paths).toHaveProperty('/auth/register');
         expect(res.body.paths).toHaveProperty('/auth/login');
+        expect(res.body.paths).toHaveProperty('/auth/refresh');
       });
   });
 
@@ -119,6 +120,13 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: 'not-an-email', password: '' })
+      .expect(400);
+  });
+
+  it('should not be able to refresh with an invalid payload', () => {
+    return request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ refreshToken: '' })
       .expect(400);
   });
 
