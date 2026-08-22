@@ -1,23 +1,20 @@
 import { Controller, Get, Req } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { toDto } from '../../core/http/to-dto';
+import { GeoResponseDto } from './dto/geo-response.dto';
+import { ApiGeoTag, ApiGetLocation } from './geo.docs';
 import { GeoService } from './geo.service';
-import { GeoResponse } from './geo.types';
 import { getClientIp } from './geo.utils';
 
-@ApiTags('geo')
+@ApiGeoTag()
 @Controller('geo')
 export class GeoController {
   constructor(private readonly geoService: GeoService) {}
 
   @Get()
-  @ApiOperation({
-    summary: 'Localização a partir do IP do cliente',
-    description:
-      'Usa o IP da requisição. Em localhost ou rede privada, consulta o IP público de saída.',
-  })
-  @ApiOkResponse({ type: GeoResponse })
-  getLocation(@Req() req: Request): Promise<GeoResponse> {
-    return this.geoService.getLocation(getClientIp(req));
+  @ApiGetLocation()
+  async getLocation(@Req() req: Request): Promise<GeoResponseDto> {
+    const location = await this.geoService.getLocation(getClientIp(req));
+    return toDto(GeoResponseDto, location);
   }
 }
