@@ -1,4 +1,8 @@
-import { NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { FirmwareController } from './firmware.controller';
@@ -8,6 +12,8 @@ describe('FirmwareController', () => {
   const firmwareService = {
     publish: jest.fn(),
     getLatestManifest: jest.fn(),
+    remove: jest.fn(),
+    removeAll: jest.fn(),
   };
   let controller: FirmwareController;
 
@@ -23,8 +29,12 @@ describe('FirmwareController', () => {
   beforeEach(async () => {
     firmwareService.publish.mockReset();
     firmwareService.getLatestManifest.mockReset();
+    firmwareService.remove.mockReset();
+    firmwareService.removeAll.mockReset();
     firmwareService.publish.mockResolvedValue(manifest);
     firmwareService.getLatestManifest.mockResolvedValue(manifest);
+    firmwareService.remove.mockResolvedValue(undefined);
+    firmwareService.removeAll.mockResolvedValue(undefined);
 
     const module = await Test.createTestingModule({
       controllers: [FirmwareController],
@@ -81,6 +91,24 @@ describe('FirmwareController', () => {
 
     await expect(controller.download()).rejects.toBeInstanceOf(
       NotFoundException,
+    );
+  });
+
+  it('should be able to delete all firmware releases', async () => {
+    await expect(controller.remove()).resolves.toBeUndefined();
+    expect(firmwareService.removeAll).toHaveBeenCalled();
+  });
+
+  it('should be able to delete a single firmware version', async () => {
+    await expect(
+      controller.remove('2', 'car-display'),
+    ).resolves.toBeUndefined();
+    expect(firmwareService.remove).toHaveBeenCalledWith(2, 'car-display');
+  });
+
+  it('should not be able to delete a firmware with an invalid version', async () => {
+    await expect(controller.remove('abc')).rejects.toBeInstanceOf(
+      BadRequestException,
     );
   });
 

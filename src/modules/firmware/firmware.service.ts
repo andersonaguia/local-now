@@ -96,6 +96,26 @@ export class FirmwareService {
     return toManifest(release);
   }
 
+  async remove(version: number, model?: string): Promise<void> {
+    const resolvedModel = model?.trim() || DEFAULT_FIRMWARE_MODEL;
+    const release = await this.findByModelVersion(resolvedModel, version);
+    if (!release) {
+      throw new NotFoundException('Firmware not found');
+    }
+
+    await this.githubReleases.deleteByTag(
+      firmwareTag(release.model, release.version),
+    );
+    await this.database.db
+      .delete(firmwares)
+      .where(eq(firmwares.id, release.id));
+  }
+
+  async removeAll(): Promise<void> {
+    await this.githubReleases.deleteAllReleases();
+    await this.database.db.delete(firmwares);
+  }
+
   private async findLatest(
     model: string,
   ): Promise<FirmwareRelease | undefined> {

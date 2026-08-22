@@ -9,7 +9,13 @@ import { parseGithubRepo } from './firmware.utils';
 
 type GithubRelease = {
   id: number;
+  tag_name?: string;
   upload_url: string;
+};
+
+type GithubReleaseRef = {
+  id: number;
+  tag_name: string;
 };
 
 type GithubAsset = {
@@ -30,7 +36,7 @@ export class GithubReleasesService {
       const url = await this.uploadAsset(release, input.buffer);
       return { url };
     } catch (error) {
-      await this.deleteRelease(release.id);
+      await this.deleteRelease(release.id, input.tag).catch(() => undefined);
       throw error;
     }
   }
@@ -79,14 +85,91 @@ export class GithubReleasesService {
     return body.browser_download_url;
   }
 
-  private async deleteRelease(releaseId: number): Promise<void> {
-    try {
-      await this.githubJson(`/repos/${this.repoPath()}/releases/${releaseId}`, {
-        method: 'DELETE',
-      });
-    } catch {
-      // Best-effort rollback if the asset upload failed after the release existed.
+  async deleteByTag(tag: string): Promise<void> {
+    const release = await this.findReleaseByTag(tag);
+    if (release) {
+      await this.deleteRelease(release.id, release.tag_name);
+      return;
     }
+
+    await this.deleteTag(tag);
+  }
+
+  async deleteAllReleases(): Promise<void> {
+    for (;;) {
+      const releases = await this.listReleases();
+      if (releases.length === 0) {
+        return;
+      }
+
+      for (const release of releases) {
+        await this.deleteRelease(release.id, release.tag_name);
+      }
+    }
+  }
+
+  private async findReleaseByTag(
+    tag: string,
+  ): Promise<GithubReleaseRef | undefined> {
+    const body = await this.githubJson<GithubReleaseRef | undefined>(
+      `/repos/${this.repoPath()}/releases/tags/${encodeURIComponent(tag)}`,
+      { method: 'GET' },
+      { allowNotFound: true },
+    );
+
+    if (!body) {
+      return undefined;
+    }
+    if (typeof body.id !== 'number' || typeof body.tag_name !== 'string') {
+      throw new BadGatewayException('GitHub release response is invalid');
+    }
+
+    return { id: body.id, tag_name: body.tag_name };
+  }
+
+  private async listReleases(): Promise<GithubReleaseRef[]> {
+    const body = await this.githubJson<unknown>(
+      `/repos/${this.repoPath()}/releases?per_page=100&page=1`,
+      { method: 'GET' },
+    );
+
+    if (!Array.isArray(body)) {
+      throw new BadGatewayException('GitHub release list is invalid');
+    }
+
+    return body.map((item) => {
+      if (
+        typeof item !== 'object' ||
+        item === null ||
+        typeof (item as GithubReleaseRef).id !== 'number' ||
+        typeof (item as GithubReleaseRef).tag_name !== 'string'
+      ) {
+        throw new BadGatewayException('GitHub release list is invalid');
+      }
+
+      const release = item as GithubReleaseRef;
+      return { id: release.id, tag_name: release.tag_name };
+    });
+  }
+
+  private async deleteRelease(releaseId: number, tag?: string): Promise<void> {
+    await this.githubJson(
+      `/repos/${this.repoPath()}/releases/${releaseId}`,
+      { method: 'DELETE' },
+      { allowNotFound: true },
+    );
+
+    if (tag) {
+      await this.deleteTag(tag);
+    }
+  }
+
+  private async deleteTag(tag: string): Promise<void> {
+    await this.githubJson(
+      `/repos/${this.repoPath()}/git/refs/tags/${encodeURIComponent(tag)}`,
+      { method: 'DELETE' },
+      { allowNotFound: true },
+    );
   }
 
   private repoPath(): string {
@@ -99,6 +182,7 @@ export class GithubReleasesService {
   private async githubJson<T>(
     pathOrUrl: string,
     init: RequestInit,
+    options?: { allowNotFound?: boolean },
   ): Promise<T> {
     const token = this.config.getOrThrow<string>('GITHUB_TOKEN');
     const url = pathOrUrl.startsWith('https://')
@@ -128,6 +212,9 @@ export class GithubReleasesService {
     const payload: unknown = await response.json().catch(() => undefined);
 
     if (!response.ok) {
+      if (options?.allowNotFound && response.status === 404) {
+        return undefined as T;
+      }
       if (response.status === 401 || response.status === 403) {
         throw new InternalServerErrorException(
           'GitHub rejected the firmware token',
@@ -136,7 +223,7 @@ export class GithubReleasesService {
       if (response.status === 422) {
         throw new BadGatewayException('GitHub release already exists');
       }
-      throw new BadGatewayException('GitHub release upload failed');
+      throw new BadGatewayException('GitHub request failed');
     }
 
     return payload as T;
