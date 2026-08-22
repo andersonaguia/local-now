@@ -1,1 +1,1 @@
-process.env.TURSO_DATABASE_URL ??= 'file::memory:';
+process.env.DATABASE_URL ??= 'file::memory:';

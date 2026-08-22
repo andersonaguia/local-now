@@ -6,11 +6,14 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client, createClient } from '@libsql/client';
+import { drizzle, LibSQLDatabase } from 'drizzle-orm/libsql';
+import * as schema from './schema';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DatabaseService.name);
   readonly client: Client;
+  readonly db: LibSQLDatabase<typeof schema>;
 
   constructor(config: ConfigService) {
     const url = config.getOrThrow<string>('DATABASE_URL');
@@ -20,6 +23,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       url,
       authToken: authToken || undefined,
     });
+    this.db = drizzle(this.client, { schema });
   }
 
   async onModuleInit(): Promise<void> {
