@@ -15,7 +15,7 @@ describe('TimeController', () => {
   });
 
   describe('time', () => {
-    it('returns unix time for the ESP clock', () => {
+    it('should be able to return unix time for the ESP clock', () => {
       const result = timeController.getTime();
       expect(result.unix).toEqual(expect.any(Number));
       expect(result.tz).toBe(-3 * 3600);

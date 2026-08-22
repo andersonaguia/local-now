@@ -23,11 +23,11 @@ describe('WeatherService', () => {
   beforeEach(() => {
     geoService.getLocation.mockReset();
     fetchMock.mockReset();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
     service = new WeatherService(geoService as unknown as GeoService);
   });
 
-  it('returns current weather for the resolved location', async () => {
+  it('should be able to return current weather for the resolved location', async () => {
     geoService.getLocation.mockResolvedValue(location);
     fetchMock.mockResolvedValue({
       ok: true,
@@ -64,7 +64,7 @@ describe('WeatherService', () => {
     });
   });
 
-  it('throws when coordinates are missing', async () => {
+  it('should not be able to fetch weather when coordinates are missing', async () => {
     geoService.getLocation.mockResolvedValue({
       ...location,
       latitude: null,
@@ -77,7 +77,7 @@ describe('WeatherService', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('throws when the weather lookup fails', async () => {
+  it('should not be able to return weather when the lookup fails', async () => {
     geoService.getLocation.mockResolvedValue(location);
     fetchMock.mockRejectedValue(new Error('network down'));
 

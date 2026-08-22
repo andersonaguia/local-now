@@ -22,7 +22,7 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
-  it('/ (GET)', () => {
+  it('should be able to render the home page', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
@@ -38,7 +38,7 @@ describe('AppController (e2e)', () => {
       });
   });
 
-  it('/time (GET)', () => {
+  it('should be able to return the current time', () => {
     return request(app.getHttpServer())
       .get('/time')
       .expect(200)
@@ -50,7 +50,7 @@ describe('AppController (e2e)', () => {
       });
   });
 
-  it('/geo (GET)', () => {
+  it('should be able to return the client geolocation', () => {
     return request(app.getHttpServer())
       .get('/geo')
       .expect(200)
@@ -68,7 +68,7 @@ describe('AppController (e2e)', () => {
       });
   });
 
-  it('/weather (GET)', () => {
+  it('should be able to return the current weather', () => {
     return request(app.getHttpServer())
       .get('/weather')
       .expect(200)
@@ -88,7 +88,7 @@ describe('AppController (e2e)', () => {
       });
   });
 
-  it('/docs-json (GET)', () => {
+  it('should be able to expose swagger paths', () => {
     return request(app.getHttpServer())
       .get('/docs-json')
       .expect(200)
@@ -96,10 +96,49 @@ describe('AppController (e2e)', () => {
         expect(res.body.paths).toHaveProperty('/time');
         expect(res.body.paths).toHaveProperty('/geo');
         expect(res.body.paths).toHaveProperty('/weather');
+        expect(res.body.paths).toHaveProperty('/auth/register');
+        expect(res.body.paths).toHaveProperty('/auth/login');
+        expect(res.body.paths).toHaveProperty('/auth/refresh');
+        expect(res.body.paths).toHaveProperty('/auth/logout');
       });
   });
 
-  it('returns 429 after 10 requests per second', async () => {
+  it('should not be able to register with an invalid payload', () => {
+    return request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ email: 'not-an-email', password: '123' })
+      .expect(400);
+  });
+
+  it('should not be able to register with a weak password', () => {
+    return request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ email: 'user@example.com', password: '12aa543!' })
+      .expect(400);
+  });
+
+  it('should not be able to login with an invalid payload', () => {
+    return request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'not-an-email', password: '' })
+      .expect(400);
+  });
+
+  it('should not be able to refresh with an invalid payload', () => {
+    return request(app.getHttpServer())
+      .post('/auth/refresh')
+      .send({ refreshToken: '' })
+      .expect(400);
+  });
+
+  it('should not be able to logout with an invalid payload', () => {
+    return request(app.getHttpServer())
+      .post('/auth/logout')
+      .send({ refreshToken: '' })
+      .expect(400);
+  });
+
+  it('should not be able to exceed 10 requests per second', async () => {
     const server = app.getHttpServer();
 
     for (let i = 0; i < 10; i++) {

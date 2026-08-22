@@ -33,7 +33,7 @@ describe('GeoController', () => {
     controller = app.get<GeoController>(GeoController);
   });
 
-  it('returns the location for the request IP', async () => {
+  it('should be able to return the location for the request IP', async () => {
     const req = {
       headers: { 'x-forwarded-for': '8.8.8.8' },
       ip: '10.0.0.1',

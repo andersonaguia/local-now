@@ -1,23 +1,20 @@
 import { Controller, Get, Req } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
+import { toDto } from '../../core/http/to-dto';
 import { getClientIp } from '../geo/geo.utils';
+import { WeatherResponseDto } from './dto/weather-response.dto';
+import { ApiGetWeather, ApiWeatherTag } from './weather.docs';
 import { WeatherService } from './weather.service';
-import { WeatherResponse } from './weather.types';
 
-@ApiTags('weather')
+@ApiWeatherTag()
 @Controller('weather')
 export class WeatherController {
   constructor(private readonly weatherService: WeatherService) {}
 
   @Get()
-  @ApiOperation({
-    summary: 'Clima atual da região do IP',
-    description:
-      'Resolve a localização pelo IP e consulta temperatura, umidade e demais dados no Open-Meteo.',
-  })
-  @ApiOkResponse({ type: WeatherResponse })
-  getWeather(@Req() req: Request): Promise<WeatherResponse> {
-    return this.weatherService.getWeather(getClientIp(req));
+  @ApiGetWeather()
+  async getWeather(@Req() req: Request): Promise<WeatherResponseDto> {
+    const weather = await this.weatherService.getWeather(getClientIp(req));
+    return toDto(WeatherResponseDto, weather);
   }
 }

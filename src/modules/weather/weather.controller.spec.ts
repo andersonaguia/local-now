@@ -40,7 +40,7 @@ describe('WeatherController', () => {
     controller = app.get<WeatherController>(WeatherController);
   });
 
-  it('returns the weather for the request IP', async () => {
+  it('should be able to return the weather for the request IP', async () => {
     const req = {
       headers: { 'x-forwarded-for': '8.8.8.8' },
       ip: '10.0.0.1',

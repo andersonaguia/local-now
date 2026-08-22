@@ -3,7 +3,7 @@ import { getClientIp, isPrivateIp, normalizeIp } from './geo.utils';
 
 describe('geo.utils', () => {
   describe('normalizeIp', () => {
-    it('strips IPv4-mapped IPv6 prefix', () => {
+    it('should be able to strip IPv4-mapped IPv6 prefix', () => {
       expect(normalizeIp('::ffff:192.168.0.10')).toBe('192.168.0.10');
     });
   });
@@ -22,12 +22,12 @@ describe('geo.utils', () => {
       '169.254.1.1',
       'fd12:3456:789a::1',
       'fe80::1',
-    ])('treats %s as private', (ip) => {
+    ])('should be a private IP (%s)', (ip) => {
       expect(isPrivateIp(ip)).toBe(true);
     });
 
     it.each(['8.8.8.8', '1.1.1.1', '177.0.0.1', '172.15.0.1', '172.32.0.1'])(
-      'treats %s as public',
+      'should be a public IP (%s)',
       (ip) => {
         expect(isPrivateIp(ip)).toBe(false);
       },
@@ -35,7 +35,7 @@ describe('geo.utils', () => {
   });
 
   describe('getClientIp', () => {
-    it('prefers the first X-Forwarded-For address', () => {
+    it('should be able to prefer the first X-Forwarded-For address', () => {
       const req = {
         headers: { 'x-forwarded-for': '203.0.113.10, 10.0.0.1' },
         ip: '10.0.0.1',
@@ -44,7 +44,7 @@ describe('geo.utils', () => {
       expect(getClientIp(req)).toBe('203.0.113.10');
     });
 
-    it('falls back to req.ip', () => {
+    it('should be able to fall back to req.ip', () => {
       const req = {
         headers: {},
         ip: '8.8.8.8',

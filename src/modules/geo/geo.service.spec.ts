@@ -8,10 +8,10 @@ describe('GeoService', () => {
   beforeEach(() => {
     service = new GeoService();
     fetchMock.mockReset();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
   });
 
-  it('looks up a public client IP', async () => {
+  it('should be able to look up a public client IP', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -45,7 +45,7 @@ describe('GeoService', () => {
     });
   });
 
-  it('falls back to the caller public IP when the client IP is private', async () => {
+  it('should be able to fall back to the caller public IP when the client IP is private', async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -71,7 +71,7 @@ describe('GeoService', () => {
     expect(result.countryCode).toBe('BR');
   });
 
-  it('throws when the lookup fails', async () => {
+  it('should not be able to return a location when the lookup fails', async () => {
     fetchMock.mockRejectedValue(new Error('network down'));
 
     await expect(service.getLocation('8.8.8.8')).rejects.toBeInstanceOf(

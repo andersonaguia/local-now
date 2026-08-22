@@ -41,7 +41,7 @@ describe('AppController', () => {
     controller = app.get<AppController>(AppController);
   });
 
-  it('renders city, date, time and apparent temperature', async () => {
+  it('should be able to render city, date, time and apparent temperature', async () => {
     const req = { headers: {}, ip: '8.8.8.8' } as unknown as Request;
     const html = await controller.home(req);
 
@@ -53,7 +53,7 @@ describe('AppController', () => {
     expect(html).toContain('23,1 °C');
   });
 
-  it('keeps the page available when weather lookup fails', async () => {
+  it('should be able to keep the page available when weather lookup fails', async () => {
     weatherService.getWeather.mockRejectedValue(new Error('offline'));
     const req = { headers: {}, ip: '8.8.8.8' } as unknown as Request;
     const html = await controller.home(req);
